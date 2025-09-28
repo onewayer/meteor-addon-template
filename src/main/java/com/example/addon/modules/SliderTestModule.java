@@ -2,17 +2,21 @@ package com.example.addon.modules;
 
 import com.example.addon.AddonTemplate;
 import meteordevelopment.meteorclient.events.render.Render3DEvent;
+import meteordevelopment.meteorclient.events.world.TickEvent;
 import meteordevelopment.meteorclient.renderer.ShapeMode;
 import meteordevelopment.meteorclient.settings.BoolSetting;
 import meteordevelopment.meteorclient.settings.IntSetting;
+import meteordevelopment.meteorclient.settings.KeybindSetting;
 import meteordevelopment.meteorclient.settings.Setting;
 import meteordevelopment.meteorclient.settings.SettingGroup;
 import meteordevelopment.meteorclient.systems.modules.Module;
+import meteordevelopment.meteorclient.utils.misc.Keybind;
 import meteordevelopment.meteorclient.utils.render.color.Color;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
+import org.lwjgl.glfw.GLFW;
 
 public class SliderTestModule extends Module {
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
@@ -48,8 +52,6 @@ public class SliderTestModule extends Module {
         .build()
     );
 
-
-
     private final Setting<Integer> renderDistance = sgGeneral.add(new IntSetting.Builder()
         .name("render-distance")
         .description("How far ahead to render the highway preview")
@@ -58,6 +60,15 @@ public class SliderTestModule extends Module {
         .sliderRange(5, 50)
         .build()
     );
+
+    private final Setting<Keybind> confirmBuild = sgGeneral.add(new KeybindSetting.Builder()
+        .name("confirm-build")
+        .description("Press this key to start construction")
+        .defaultValue(Keybind.fromKey(GLFW.GLFW_KEY_ENTER))
+        .build()
+    );
+
+    private boolean isBuilding = false;
 
     // 4-directional highway system for straight highways only
     private enum HighwayDirection {
@@ -102,6 +113,20 @@ public class SliderTestModule extends Module {
     @Override
     public void onActivate() {
         info("Highway Builder activated: width is " + placeRange.get() + " blocks");
+        info("Press " + confirmBuild.get().toString() + " when ready to build!");
+        isBuilding = false;
+    }
+
+    @EventHandler
+    private void onTick(TickEvent.Pre event) {
+        if (mc.player == null) return;
+
+        // Check if confirm key is pressed
+        if (confirmBuild.get().isPressed() && !isBuilding) {
+            isBuilding = true;
+            info("Construction has started!");
+            // TODO: Add actual building logic here
+        }
     }
 
     @EventHandler
